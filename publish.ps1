@@ -35,9 +35,13 @@ $json = ConvertTo-Json @($entry) -Depth 5
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot "repo.json"), $json, (New-Object Text.UTF8Encoding $false))
 
 if (-not $SkipGit) {
+    # git prints progress on stderr, which Windows PowerShell would treat as a failure under "Stop".
+    $ErrorActionPreference = "Continue"
     git add -A
     git commit -m "Release v$version"
-    git push origin HEAD
+    git push origin HEAD 2>&1 | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw "git push failed" }
+    $ErrorActionPreference = "Stop"
 }
 
 gh release create "v$version" $zip --repo "$owner/$repo" --title "CATS Toybox v$version" --notes "CATS Toybox v$version"
