@@ -1,0 +1,47 @@
+# Builds CATS Toybox, updates repo.json, pushes, and publishes a GitHub release.
+# Usage (from this folder):  .\publish.ps1
+# Bump <Version> in CATSToybox.csproj first; Dalamud only offers an update when the version goes up.
+
+param([switch]$SkipGit)   # -SkipGit: build, write repo.json and release, but leave committing/pushing to you
+
+$ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) { $env:Path += ";C:\Program Files\GitHub CLI" }
+
+# Which GitHub repo this is, from the git remote (e.g. https://github.com/someone/CATSToybox.git).
+$remote = git remote get-url origin
+if ($remote -notmatch "github\.com[:/](?<owner>[^/]+)/(?<repo>[^/.]+)") { throw "origin isn't a GitHub repo: $remote" }
+$owner = $Matches.owner; $repo = $Matches.repo
+$repoUrl = "https://github.com/$owner/$repo"
+
+dotnet build -c Release -nologo
+if ($LASTEXITCODE -ne 0) { throw "Build failed" }
+
+$zip = Join-Path $PSScriptRoot "bin\Release\CATSToybox\latest.zip"
+$manifest = Get-Content (Join-Path $PSScriptRoot "bin\Release\CATSToybox\CATSToybox.json") -Raw | ConvertFrom-Json
+$version = $manifest.AssemblyVersion
+$download = "$repoUrl/releases/download/v$version/latest.zip"
+
+# repo.json: the list Dalamud reads from the custom repository URL.
+$entry = [ordered]@{}
+foreach ($p in $manifest.PSObject.Properties) { $entry[$p.Name] = $p.Value }
+$entry["Author"] = $owner
+$entry["RepoUrl"] = $repoUrl
+$entry["DownloadLinkInstall"] = $download
+$entry["DownloadLinkUpdate"] = $download
+$entry["DownloadLinkTesting"] = $download
+$entry["LastUpdate"] = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+$json = ConvertTo-Json @($entry) -Depth 5
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot "repo.json"), $json, (New-Object Text.UTF8Encoding $false))
+
+if (-not $SkipGit) {
+    git add -A
+    git commit -m "Release v$version"
+    git push origin HEAD
+}
+
+gh release create "v$version" $zip --repo "$owner/$repo" --title "CATS Toybox v$version" --notes "CATS Toybox v$version"
+
+Write-Host ""
+Write-Host "Published v$version."
+Write-Host "Custom repo URL: https://raw.githubusercontent.com/$owner/$repo/main/repo.json"

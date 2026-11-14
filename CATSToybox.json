@@ -1,0 +1,10 @@
+{
+  "Author": "VamprincessDorene",
+  "Name": "CATS Toybox",
+  "Punchline": "All of the CATS plugins in one box: Flip Cup, SignSpeak, Cursed Identify, Visor Flash and Move Duplicates.",
+  "Description": "One plugin, one window (/toybox), one tab per toy. Turn any toy on or off from the Home tab.\n\n- Flip Cup: play flip cup with friends on a counter in your house (/flipcup).\n- SignSpeak: type a message and your character fingerspells it in ASL (/sign).\n- Cursed Identify: the cursed smallclothes lock on during /study (needs Glamourer) (/cursed).\n- Visor Flash: /visor flashes the Charm Shirt Halter mod (/visorflash).\n- Move Duplicates: right-click an item with a retainer or the FC chest open to move duplicate stacks across.",
+  "ApplicableVersion": "any",
+  "Tags": [ "toybox", "game", "housing", "ASL", "emote", "glamourer", "penumbra", "inventory", "retainer" ],
+  "CategoryTags": [ "other" ],
+  "AcceptsFeedback": true
+}
